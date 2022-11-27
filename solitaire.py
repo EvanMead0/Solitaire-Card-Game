@@ -6,6 +6,7 @@ CS021
 import pygame
 import random
 
+# setup function || shuffles the deck, deals the table, and sets up click boxes
 def setup():
     random.shuffle(full_deck)
     for i in range(7):
@@ -16,6 +17,7 @@ def setup():
     for i in range(7):
         empty_boxes.append(pygame.Rect(70+(i*60), 10, 50, 70))
         
+# update function || called continuously, draws elements to the screen
 def update():
     pygame.display.flip()
     screen.fill(COLOR)
@@ -53,14 +55,20 @@ def update():
     screen.blit(spades_spot, (500, 250))
 
     for i in range(4):
+        kings = 0
         if storage[i]:
             for x in storage[i]:
                 x.draw(500, 10+(i*80))
+            if (storage[i][-1].number == "k"):
+                kings += 1
+        if kings == 4:
+            print("won")
 
+# draw cards function || pulls 'x' cards from the deck and into hand, if nothing in deck it flips the hand into the deck
 def draw_cards():
     if hand:
         for _ in range(len(hand)):
-            drawn_deck.append(hand.pop()) 
+            drawn_deck.append(hand.pop())
     for i in range(cards_to_flip):
         if full_deck:
             hand.append(full_deck.pop())
@@ -68,7 +76,8 @@ def draw_cards():
     if not(full_deck):
         for i in range(len(drawn_deck)):
             full_deck.append(drawn_deck.pop())
-
+    
+# card hover funciton || purely graphical, responsible for "highlighting" the card the pointer is "hovering" over
 def card_hover():
     for i in range(len(table)):
         for j in range(len(table[i])):
@@ -99,6 +108,7 @@ def card_hover():
         if i[0] != "":
             i[0].disp = [10, 0]
 
+# stack function || validates that the card being added to a stack is exactly 1 less than the previous and of the opposite color
 def stack(bottom, top):
     b_val = 0
     t_val = 0
@@ -129,6 +139,7 @@ def stack(bottom, top):
     else:
         return False
 
+# switch function || moves card elements and their children between stacks
 def switch():
     if selected[0][1] == "hand":
         if selected[0][0] == hand[-1]:
@@ -221,6 +232,8 @@ def switch():
         if table[i]:
             table[i][-1].active = True
 
+# Card Class || Defines carcds and their properties such as position, suit, color, and value
+
 class Card:
     def __init__(self, suit, number, color, x, y, c_box, active, disp):
         self.suit = suit
@@ -260,7 +273,7 @@ if __name__ == "__main__":
     CARD_IMAGES = {}
     INDICATORS = {}
 
-    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
     pygame.display.set_caption('Solitaire')  
     card_back = pygame.image.load("sprites/card_back.png")
     draw_box = pygame.Rect(10, 10, 50, 70)
@@ -279,9 +292,13 @@ if __name__ == "__main__":
 
     empty_boxes = []
     cards_to_flip = 0
+    win_state = False
+    moves = 0
 
     with open("launch_settings.txt") as f:
-        cards_to_flip = int(f.read().strip("\n"))
+        data = f.readlines()
+        cards_to_flip = int(data[0].strip("\n"))
+        card_back = pygame.image.load(data[1].strip("\n"))
 
     running = True
     turn = "player"
@@ -306,7 +323,11 @@ if __name__ == "__main__":
 
         if len(selected) == 2:
             switch()
+            if selected[0] != selected[1]:
+                moves += 1
+                print(f"Moves: {moves}")
             selected = []
+            
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
